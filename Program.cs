@@ -23,7 +23,6 @@ namespace Telegram.Bot.Examples.Echo
 
         private static string user;
         private static string remoteIp;
-        private static string port;
         private static string thisIpv4;
         private static string thisIpv6;
         private static string hostName;
@@ -41,13 +40,16 @@ namespace Telegram.Bot.Examples.Echo
             {
                 installScript();
             }
+            else if (args[0] == "uninstall")
+            {
+                uninstallScript();
+            }
 
             // Fill UNIX command based variables
             hostName = "printf $HOSTNAME".Bash();
             sshPid = int.Parse("ps --no-headers -fp $$ | awk '{print $3}'".Bash());
 
             user = "printf $USER".Bash();
-            port = "printf $SSH_CLIENT | awk '{ print $3}'".Bash();
 
         	remoteIp = "printf $SSH_CLIENT | awk '{ print $1 }'".Bash();
         	thisIpv4 = "dig TXT +short o-o.myaddr.l.google.com @ns1.google.com -4 | awk -F'\"' '{ print $2}'".Bash();
@@ -87,6 +89,34 @@ namespace Telegram.Bot.Examples.Echo
             Bot.StopReceiving();
         }
 
+        private static void uninstallScript()
+        {
+            bool hasRootAccess = "printf $EUID".Bash() == "0";
+
+            if (hasRootAccess)
+            {
+                if (System.IO.File.Exists("/usr/bin/ssh-report"))
+                {
+                    Console.WriteLine("Restoring backup of /etc/profile from /etc/profile.bak ...");
+                    System.IO.File.WriteAllText("/etc/profile", System.IO.File.ReadAllText("/etc/profile.bak"));
+
+                    Console.WriteLine("Deleting ssh-report from /usr/bin/ssh-report ...");
+                    System.IO.File.Delete("/usr/bin/ssh-report");
+
+                    Console.WriteLine("\nDone! Try logging in to SSH with another terminal/tab.");
+                    Console.WriteLine("WARNING!!! Better leave this terminal open until you confirmed it to be uninstalled!!!");
+                }
+                else 
+                {
+                    Console.WriteLine("Doesn't seem to be installed!");
+                }
+            }
+            else
+                Console.WriteLine("Run this as sudo!");
+
+            Environment.Exit(0);
+        }
+
         private static void writeWelcome()
         {
             Console.WriteLine($"Welcome on {hostName} SSH server.");
@@ -109,6 +139,12 @@ namespace Telegram.Bot.Examples.Echo
 
             if (hasRootAccess)
             {
+                if (System.IO.File.Exists("/usr/bin/ssh-report"))
+                {
+                    Console.WriteLine("Already installed! (/usr/bin/ssh-report exists!)");
+                    return;
+                }
+
                 Console.WriteLine("Notice: I'm not responsible for being locked out of SSH, broken servers, thermonuclear war, or whatever unexpected may happen. You decided to install this so take your responsibility!\n");
                 Console.WriteLine("Thank you for downloading my script! (You can read the full source code over at GitHub: https://github.com/vleeuwenmenno/ssh-report-telegram)\n\n\n");
 
@@ -126,6 +162,9 @@ namespace Telegram.Bot.Examples.Echo
                                     "else" + Environment.NewLine +
                                     "    kill -9 $PPID" + Environment.NewLine +
                                     "fi" + Environment.NewLine;
+
+                Console.WriteLine("Making a backup of /etc/profile at /etc/profile.bak ...");
+                System.IO.File.WriteAllText("/etc/profile.bak", System.IO.File.ReadAllText("/etc/profile"));
 
                 Console.WriteLine("Adding trap script to start of /etc/profile ...");
                 System.IO.File.WriteAllText("/etc/profile", profile + Environment.NewLine + System.IO.File.ReadAllText("/etc/profile"));
@@ -165,7 +204,7 @@ namespace Telegram.Bot.Examples.Echo
 
             await Bot.SendTextMessageAsync(
                 chatId: userChatId,
-                text: $"\U000026A0 Someone is trying to login to SSH (Port: {port})!\n\n\t\tServer: {hostName}\n\n\t\tLogin: {user}\n\t\tRequester IP: {remoteIp}\n\n\t\tServer IPv4: {thisIpv4}\n\t\tServer IPv6: {thisIpv6}\n\nDo you want to grant shell access?",
+                text: $"\U000026A0 Someone is trying to login to SSH!\n\n\t\tServer: {hostName}\n\n\t\tLogin: {user}\n\t\tRequester IP: {remoteIp}\n\n\t\tServer IPv4: {thisIpv4}\n\t\tServer IPv6: {thisIpv6}\n\nDo you want to grant shell access?",
                 replyMarkup: inlineKeyboard
             );
         }
@@ -213,7 +252,7 @@ namespace Telegram.Bot.Examples.Echo
 
                 await Bot.SendTextMessageAsync(
                     chatId: userChatId,
-                    text: $"\U000026A0 Someone is trying to login to SSH (Port: {port})!\n\n\t\tLogin: {user}\n\t\tRequester IP: {remoteIp}\n\n\t\tServer IPv4: {thisIpv4}\n\t\tServer IPv6: {thisIpv6}\n\nDo you want to grant shell access?",
+                    text: $"\U000026A0 Someone is trying to login to SSH!\n\n\t\tLogin: {user}\n\t\tRequester IP: {remoteIp}\n\n\t\tServer IPv4: {thisIpv4}\n\t\tServer IPv6: {thisIpv6}\n\nDo you want to grant shell access?",
                     replyMarkup: inlineKeyboard
                 );
             }
