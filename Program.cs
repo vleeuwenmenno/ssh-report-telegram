@@ -109,18 +109,23 @@ namespace Telegram.Bot.Examples.Echo
 
             if (hasRootAccess)
             {
-                Console.WriteLine("Notice: I'm not responsible for being locked out of SSH, broken servers, thermonuclear war, or whatever unexpected may happen. You decided to install this so take your responsibility!");
-                Console.WriteLine("Thank you for downloading my script! (You can read the full source code over at GitHub: )");
+                Console.WriteLine("Notice: I'm not responsible for being locked out of SSH, broken servers, thermonuclear war, or whatever unexpected may happen. You decided to install this so take your responsibility!\n");
+                Console.WriteLine("Thank you for downloading my script! (You can read the full source code over at GitHub: https://github.com/vleeuwenmenno/ssh-report-telegram)\n\n\n");
 
+                Console.Write("Telegram chat ID: ");
+                string cid = Console.ReadLine();
 
-                string profile =    "trap '' 2" +
-                                    "/usr/bin/ssh-report CHAT_ID BOT_TOKEN" +
-                                    "if [ \"$?\" -eq \"40\" ]; then" +
-                                    "    /usr/bin/ssh-report welcome" +
-                                    "    trap 2" +
-                                    "else" +
-                                    "    kill -9 $PPID" +
-                                    "fi";
+                Console.Write("Telegram bot token: ");
+                string token = Console.ReadLine();
+
+                string profile =    "trap '' 2" + Environment.NewLine +
+                                    $"/usr/bin/ssh-report {cid} {token}" + Environment.NewLine +
+                                    "if [ \"$?\" -eq \"40\" ]; then" + Environment.NewLine +
+                                    "    /usr/bin/ssh-report welcome" + Environment.NewLine +
+                                    "    trap 2" + Environment.NewLine +
+                                    "else" + Environment.NewLine +
+                                    "    kill -9 $PPID" + Environment.NewLine +
+                                    "fi" + Environment.NewLine;
 
                 Console.WriteLine("Adding trap script to start of /etc/profile ...");
                 System.IO.File.WriteAllText("/etc/profile", profile + Environment.NewLine + System.IO.File.ReadAllText("/etc/profile"));
