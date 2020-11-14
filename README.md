@@ -21,6 +21,21 @@ I am not sure how secure it is but you can decide that yourself.
 5. Enter your bot API token
 6. Try logging in
 
+## Spam default welcome message?
+
+You can disable the Debian message with
+
+    sudo chmod -x /etc/update-motd.d/*
+
+And sometimes you also need to do
+
+    touch ~/.hushlogin
+
+## Custom welcome message from ssh-report
+
+You can change `/etc/profile` here you can update the line right after `if [ "$?" -eq "40" ]; then`
+<br/>Just remove `/usr/bin/ssh-report welcome` and add your own script there.
+
 ## Don't know how to get the chat id/bot token?
 
 Have a look at this StackOverflow
